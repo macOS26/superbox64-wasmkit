@@ -1,12 +1,14 @@
-# SuperBox64 WASMKit
+# superbox64-wasmkit
 
-Run a game in the browser as **WebAssembly — without Emscripten**.
+Run a game in the browser as WebAssembly, without Emscripten.
 
-The JavaScript runtime in this repo drives the game loop, implements graphics on Canvas2D (with display-p3 wide color gamut on supporting browsers), audio on Web Audio API, input on DOM events and the Web Gamepad API, and persistence on localStorage. No watermarks. No loading screens. No third-party branding.
+The JavaScript runtime in this repo drives the game loop, renders on Canvas2D (display-p3 wide color on supporting browsers), mixes audio on Web Audio API, handles input from DOM events and the Web Gamepad API, and persists state to localStorage. No watermarks. No loading screens. No third-party branding.
 
 **Live demo:** [boss-man.us/play](https://boss-man.us/play)
 
-**Reference game:** [github.com/macOS26/Boss-Man](https://github.com/macOS26/Boss-Man)
+**Swift SpriteKit package:** [superbox64-spritekit](https://github.com/macOS26/superbox64-spritekit)
+
+**Reference game:** [Boss-Man](https://github.com/macOS26/Boss-Man)
 
 ---
 
@@ -14,27 +16,98 @@ The JavaScript runtime in this repo drives the game loop, implements graphics on
 
 | Path | What it is |
 |---|---|
-| `runtime.js` | The entire JavaScript runtime (Canvas2D renderer, Web Audio mixer, DOM input, asset preloader, gamepad, localStorage persistence) |
-| `shell.html` | Minimal host page — set `window.WASMWEB`, serve `runtime.js` next to it |
-| `scripts/bundle.py` | Packages a finished wasm + manifest into a single-file `local.html` (all assets inlined as data: URLs for offline / file:/// use) |
-| `build.sh` | Build helper for C/C++ games via the WASI SDK — adds the right flags, stack size, reactor model, and kit include path |
-| `include/abi.h` | The raw C ABI every game talks through (`gfx_*`, `snd_*`, `key_*`, `evt_*`, `win_*`, `store_*`) |
-| `include/SFML/` | Header-only SFML 2.6 compatibility shim so C++ SFML games compile without modification |
-| `spritekit/` | [SuperBox64 SpriteKit](spritekit/README.md) — a Swift reimplementation of Apple's SpriteKit that compiles to WASM; the primary way to build games with this kit |
+| `runtime.js` | The entire JavaScript runtime (Canvas2D renderer, Web Audio mixer, DOM input, asset preloader, gamepad, localStorage) |
+| `shell.html` | Minimal host page — configure `window.WASMWEB`, serve `runtime.js` next to it |
+| `build.sh` | Build helper for C/C++ games via the WASI SDK |
+| `include/abi.h` | C ABI the WASM binary uses to call the runtime (`gfx_*`, `snd_*`, `key_*`, `evt_*`, `win_*`, `store_*`) |
+| `include/SFML/` | Header-only SFML 2.6 shim so existing C++ SFML games compile unchanged |
+| `scripts/bundle.py` | Packages a finished wasm + assets into a single offline `local.html` (all assets inlined as data: URLs) |
+
+---
+
+## Host Page
+
+Copy `shell.html`, configure `window.WASMWEB`, and serve `runtime.js` next to it:
+
+```html
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8"/>
+  <style>
+    html,body{margin:0;background:#000;}
+    #game{width:100vw;aspect-ratio:1184/666;display:block;}
+  </style>
+</head><body>
+  <canvas id="game"></canvas>
+  <script>
+    window.WASMWEB = {
+      logicalWidth:  1184,
+      logicalHeight: 666,
+      wasmUrl:       'game.wasm',
+      assetRoot:     'assets',
+      title:         'My Game'
+    };
+  </script>
+  <script src="runtime.js"></script>
+</body></html>
+```
+
+The runtime preloads every asset listed in `manifest.json` (fonts via `FontFace`, images via `ImageBitmap`, audio via `AudioBuffer`, JSON as strings) before calling `boot()`, then runs the frame loop via `requestAnimationFrame`.
 
 ---
 
 ## Reactor Contract
 
-The WASM binary is a **WASI Preview 1 reactor** that exports exactly three symbols:
+The WASM binary is a WASI Preview 1 reactor exporting exactly three symbols:
 
-| Export | When | What |
+| Export | When called | What it does |
 |---|---|---|
 | `_initialize` | Once, first | libc/libc++ init and C++ global constructors |
-| `boot()` | Once, after all assets preload | Create the game scene |
+| `boot()` | Once, after assets preload | Create the game scene |
 | `frame(dtMs: f64)` | Every `requestAnimationFrame` | Advance and render one frame |
 
-Everything else (drawing, sound, input, persistence) is **imported** from the `env` module. See `include/abi.h` for the full contract.
+Everything else (drawing, audio, input, persistence) is imported from the `env` module via `include/abi.h`.
+
+---
+
+## Building a C/C++ Game
+
+```bash
+# In your game's build script:
+WASMWEB_OUT=web/game.wasm
+WASMWEB_SRC_DIRS=(src)
+WASMWEB_INCLUDES=(include)
+WASMWEB_SFML=on          # link the sf:: SFML shim
+source ../superbox64-wasmkit/build.sh
+wasmweb_build
+```
+
+`build.sh` variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `WASMWEB_OUT` | required | Output `.wasm` path |
+| `WASMWEB_SRC_DIRS` | `(src)` | Directories scanned for `*.cpp` / `*.c` |
+| `WASMWEB_EXTRA_SRCS` | `()` | Explicit extra source files |
+| `WASMWEB_INCLUDES` | `()` | Extra `-I` directories |
+| `WASMWEB_DEFINES` | `()` | Extra `-D` defines |
+| `WASMWEB_SFML` | `off` | `on` to link the `sf::` SFML compatibility shim |
+| `WASMWEB_EXCEPTIONS` | `off` | `on` to enable C++ exceptions (increases binary size) |
+| `WASMWEB_ASSETS` | | Assets directory to scan for `manifest.json` |
+
+---
+
+## Building a Swift SpriteKit Game
+
+Use [superbox64-spritekit](https://github.com/macOS26/superbox64-spritekit) as a SwiftPM dependency, then build with the wasm SDK:
+
+```bash
+xcrun --toolchain swift swift build \
+    --swift-sdk swift-6.3.2-RELEASE_wasm \
+    -c release
+```
+
+The output `.wasm` is served with this runtime exactly like a C++ game.
 
 ---
 
@@ -44,7 +117,7 @@ Everything else (drawing, sound, input, persistence) is **imported** from the `e
 
 | Function | Description |
 |---|---|
-| `gfx_clear(rgba)` | Clear the canvas to a color |
+| `gfx_clear(rgba)` | Clear the canvas |
 | `gfx_fill_rect(x, y, w, h, rgba)` | Filled rectangle |
 | `gfx_stroke_rect(x, y, w, h, rgba, lw)` | Stroked rectangle |
 | `gfx_fill_circle(cx, cy, r, rgba)` | Filled circle |
@@ -55,7 +128,7 @@ Everything else (drawing, sound, input, persistence) is **imported** from the `e
 | `gfx_draw_image_ex(id, sx,sy,sw,sh, dx,dy,dw,dh, alpha)` | Draw image with source crop |
 | `gfx_set_transform(a,b,c,d,tx,ty)` | Set canvas 2D transform |
 | `gfx_reset_transform()` | Reset to identity |
-| `gfx_offscreen_begin(id, w, h, alpha)` | Start rendering to an offscreen canvas |
+| `gfx_offscreen_begin(id, w, h, alpha)` | Start rendering to offscreen canvas |
 | `gfx_offscreen_end()` | Return to main canvas |
 | `gfx_offscreen_draw(id, x, y, w, h, alpha)` | Draw offscreen canvas to main |
 
@@ -109,62 +182,29 @@ Everything else (drawing, sound, input, persistence) is **imported** from the `e
 
 | Function | Description |
 |---|---|
-| `store_set(key_ptr, key_len, val_ptr, val_len)` | Write a string to localStorage |
+| `store_set(key_ptr, key_len, val_ptr, val_len)` | Write to localStorage |
 | `store_get(key_ptr, key_len, out_ptr, max_len) → len` | Read from localStorage |
 | `store_del(key_ptr, key_len)` | Delete a localStorage entry |
 
 ---
 
-## Host Page
-
-Copy `shell.html`, set `window.WASMWEB`, and serve `runtime.js` alongside it:
-
-```html
-<script>
-  window.WASMWEB = {
-    logicalWidth: 1184,
-    logicalHeight: 666,
-    wasmUrl: 'game.wasm',
-    assetRoot: 'assets',
-    title: 'My Game'
-  };
-</script>
-<script src="runtime.js"></script>
-```
-
-The runtime preloads every asset listed in `manifest.json` (fonts via `FontFace`, images via `ImageBitmap`, sounds via `AudioBuffer`, JSON as strings) before calling `boot()`, then runs the frame loop via `requestAnimationFrame`.
-
----
-
 ## Display-P3 Wide Color
 
-On Safari, Chrome 104+, and WebKit-based WebViews, the runtime automatically negotiates a display-p3 Canvas2D context. Color components passed through the ABI are reinterpreted as P3 coordinates rather than sRGB, producing more vivid reds, greens, and yellows on wide-gamut displays. No game-side changes are needed.
+On Safari, Chrome 104+, and WebKit-based WebViews the runtime negotiates a display-p3 Canvas2D context automatically. Color values passed through the ABI are treated as P3 coordinates, producing more vivid colors on wide-gamut displays. No game-side changes needed.
 
 ---
 
-## Using the Swift SpriteKit Layer
-
-For games written in Swift using SpriteKit, see [`spritekit/`](spritekit/README.md). This is the recommended path for new games. The game's `import SpriteKit` resolves to the SuperBox64 reimplementation when building for WASM and Apple's native framework on macOS/iOS, from the same source.
-
----
-
-## Using the C++ SFML Shim
-
-For existing C++ games using SFML 2.6, point `-I include` at this repo's `include/` directory. The shim covers the common 2D subset: `sf::RenderWindow`, `sf::Sprite`, `sf::Texture`, `sf::Font`, `sf::Text`, `sf::Shape`, `sf::Sound`, `sf::Music`, `sf::Event`, `sf::Keyboard`, `sf::Mouse`.
-
-Build via `build.sh`:
+## Bundling for Offline Use
 
 ```bash
-WASMWEB_OUT=web/game.wasm
-WASMWEB_SRC_DIRS=(src)
-WASMWEB_SFML=on
-source ../superbox64-wasmkit/build.sh
-wasmweb_build
+python3 scripts/bundle.py web/game.wasm web/assets web/index.html local.html
 ```
+
+Produces a single `local.html` with every asset inlined as a `data:` URL. Opens from `file:///` with no server.
 
 ---
 
 ## Related
 
-- [superbox64-spritekit](https://github.com/macOS26/superbox64-spritekit) — the Swift SpriteKit package
-- [Boss-Man](https://github.com/macOS26/Boss-Man) — the arcade game built with this engine, shipping on 6 platforms from one Swift source
+- [superbox64-spritekit](https://github.com/macOS26/superbox64-spritekit) — Swift SpriteKit package that compiles to WASM
+- [Boss-Man](https://github.com/macOS26/Boss-Man) — full arcade game built with this kit, shipping on 6 platforms from one Swift source
