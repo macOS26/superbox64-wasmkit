@@ -1,0 +1,83 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "PackageStructure": ["<PackageStructure>"]
+  "cabi-wasm32-unknown-wasip1-release.module": ["<cabi-wasm32-unknown-wasip1-release.module>"]
+  "main": ["<cabi-wasm32-unknown-wasip1-release.module>","<poc-wasm32-unknown-wasip1-release.exe>","<poc-wasm32-unknown-wasip1-release.module>"]
+  "poc-wasm32-unknown-wasip1-release.exe": ["<poc-wasm32-unknown-wasip1-release.exe>"]
+  "poc-wasm32-unknown-wasip1-release.module": ["<poc-wasm32-unknown-wasip1-release.module>"]
+  "test": ["<cabi-wasm32-unknown-wasip1-release.module>","<poc-wasm32-unknown-wasip1-release.exe>","<poc-wasm32-unknown-wasip1-release.module>"]
+default: "main"
+nodes:
+  "/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Sources/cabi/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+  "/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Sources/poc/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/cabi.build/shim.c.o":
+    tool: clang
+    inputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Sources/cabi/shim.c"]
+    outputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/cabi.build/shim.c.o"]
+    description: "Compiling cabi shim.c"
+    args: ["/Users/toddbruss/Library/Developer/Toolchains/swift-6.3.2-RELEASE.xctoolchain/usr/bin/clang","-target","wasm32-unknown-wasip1","-O2","-DSWIFT_PACKAGE=1","-fblocks","-I","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Sources/cabi/include","--sysroot","/Users/toddbruss/Library/org.swift.swiftpm/swift-sdks/swift-6.3.2-RELEASE_wasm.artifactbundle/swift-6.3.2-RELEASE_wasm/wasm32-unknown-wasip1/WASI.sdk","-g","-MD","-MT","dependencies","-MF","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/cabi.build/shim.c.d","-c","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Sources/cabi/shim.c","-o","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/cabi.build/shim.c.o"]
+    deps: "/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/cabi.build/shim.c.d"
+
+  "/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Sources/poc/main.swift"]
+    outputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/sources"]
+    description: "Write auxiliary file /Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/sources"
+
+  "/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.product/Objects.LinkFileList":
+    tool: write-auxiliary-file
+    inputs: ["<link-file-list>","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/cabi.build/shim.c.o","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/main.swift.o"]
+    outputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.product/Objects.LinkFileList"]
+    description: "Write auxiliary file /Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.product/Objects.LinkFileList"
+
+  "/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/swift-version--7DB49EB47A4F2B16.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Users/toddbruss/Library/Developer/Toolchains/swift-6.3.2-RELEASE.xctoolchain/usr/bin/swiftc"]
+    outputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/swift-version--7DB49EB47A4F2B16.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/swift-version--7DB49EB47A4F2B16.txt"
+
+  "<cabi-wasm32-unknown-wasip1-release.module>":
+    tool: phony
+    inputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/cabi.build/shim.c.o"]
+    outputs: ["<cabi-wasm32-unknown-wasip1-release.module>"]
+
+  "<poc-wasm32-unknown-wasip1-release.exe>":
+    tool: phony
+    inputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.wasm"]
+    outputs: ["<poc-wasm32-unknown-wasip1-release.exe>"]
+
+  "<poc-wasm32-unknown-wasip1-release.module>":
+    tool: phony
+    inputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/main.swift.o","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/poc.swiftmodule"]
+    outputs: ["<poc-wasm32-unknown-wasip1-release.module>"]
+
+  "C.poc-wasm32-unknown-wasip1-release.exe":
+    tool: shell
+    inputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/cabi.build/shim.c.o","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/main.swift.o","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.product/Objects.LinkFileList"]
+    outputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.wasm"]
+    description: "Linking ./.build/wasm32-unknown-wasip1/release/poc.wasm"
+    args: ["/Users/toddbruss/Library/Developer/Toolchains/swift-6.3.2-RELEASE.xctoolchain/usr/bin/swiftc","-L","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release","-o","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.wasm","-module-name","poc","-emit-executable","-Xlinker","--gc-sections","-resource-dir","/Users/toddbruss/Library/org.swift.swiftpm/swift-sdks/swift-6.3.2-RELEASE_wasm.artifactbundle/swift-6.3.2-RELEASE_wasm/wasm32-unknown-wasip1/swift.xctoolchain/usr/lib/swift_static","-Xclang-linker","-resource-dir","-Xclang-linker","/Users/toddbruss/Library/org.swift.swiftpm/swift-sdks/swift-6.3.2-RELEASE_wasm.artifactbundle/swift-6.3.2-RELEASE_wasm/wasm32-unknown-wasip1/swift.xctoolchain/usr/lib/swift_static/clang","@/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.product/Objects.LinkFileList","-target","wasm32-unknown-wasip1","-Xclang-linker","-mexec-model=reactor","-Xlinker","--export=boot","-Xlinker","--export=frame","-Xlinker","--export-if-defined=_initialize","-Xlinker","--allow-undefined","-Xlinker","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/native/libcbox2d.a","-plugin-path","/Users/toddbruss/Library/Developer/Toolchains/swift-6.3.2-RELEASE.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Users/toddbruss/Library/org.swift.swiftpm/swift-sdks/swift-6.3.2-RELEASE_wasm.artifactbundle/swift-6.3.2-RELEASE_wasm/wasm32-unknown-wasip1/WASI.sdk","-static-stdlib","-tools-directory","/Users/toddbruss/Library/org.swift.swiftpm/swift-sdks/swift-6.3.2-RELEASE_wasm.artifactbundle/swift-6.3.2-RELEASE_wasm/wasm32-unknown-wasip1/swift.xctoolchain/usr/bin","-sdk","/Users/toddbruss/Library/org.swift.swiftpm/swift-sdks/swift-6.3.2-RELEASE_wasm.artifactbundle/swift-6.3.2-RELEASE_wasm/wasm32-unknown-wasip1/WASI.sdk","-g"]
+
+  "C.poc-wasm32-unknown-wasip1-release.module":
+    tool: shell
+    inputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Sources/poc/main.swift","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/swift-version--7DB49EB47A4F2B16.txt","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/cabi.build/shim.c.o","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/sources"]
+    outputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/main.swift.o","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/poc.swiftmodule"]
+    description: "Compiling Swift Module 'poc' (1 sources)"
+    args: ["/Users/toddbruss/Library/Developer/Toolchains/swift-6.3.2-RELEASE.xctoolchain/usr/bin/swiftc","-module-name","poc","-emit-dependencies","-emit-module","-emit-module-path","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/poc.swiftmodule","-output-file-map","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/output-file-map.json","-whole-module-optimization","-num-threads","10","-c","@/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/poc.build/sources","-I","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/Modules","-target","wasm32-unknown-wasip1","-whole-module-optimization","-num-threads","10","-serialize-diagnostics","-O","-j10","-DSWIFT_PACKAGE","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-Xcc","-fmodule-map-file=/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Sources/cabi/include/module.modulemap","-Xcc","-I","-Xcc","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Sources/cabi/include","-module-cache-path","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/.build/wasm32-unknown-wasip1/release/ModuleCache","-resource-dir","/Users/toddbruss/Library/org.swift.swiftpm/swift-sdks/swift-6.3.2-RELEASE_wasm.artifactbundle/swift-6.3.2-RELEASE_wasm/wasm32-unknown-wasip1/swift.xctoolchain/usr/lib/swift_static","-parseable-output","-swift-version","6","-plugin-path","/Users/toddbruss/Library/Developer/Toolchains/swift-6.3.2-RELEASE.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Users/toddbruss/Library/org.swift.swiftpm/swift-sdks/swift-6.3.2-RELEASE_wasm.artifactbundle/swift-6.3.2-RELEASE_wasm/wasm32-unknown-wasip1/WASI.sdk","-static-stdlib","-tools-directory","/Users/toddbruss/Library/org.swift.swiftpm/swift-sdks/swift-6.3.2-RELEASE_wasm.artifactbundle/swift-6.3.2-RELEASE_wasm/wasm32-unknown-wasip1/swift.xctoolchain/usr/bin","-sdk","/Users/toddbruss/Library/org.swift.swiftpm/swift-sdks/swift-6.3.2-RELEASE_wasm.artifactbundle/swift-6.3.2-RELEASE_wasm/wasm32-unknown-wasip1/WASI.sdk","-g","-Xcc","--sysroot","-Xcc","/Users/toddbruss/Library/org.swift.swiftpm/swift-sdks/swift-6.3.2-RELEASE_wasm.artifactbundle/swift-6.3.2-RELEASE_wasm/wasm32-unknown-wasip1/WASI.sdk","-Xcc","-g","-package-name","swift_poc"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Sources/cabi/","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Sources/poc/","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Package.swift","/Users/toddbruss/Documents/GitHub/BossMan/wasm-web-kit/example/swift-poc/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+
