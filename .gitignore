@@ -1,3 +1,9 @@
+.build/
 *.wasm
+*.o
+*.a
+*.d
+.swiftpm/
+Package.resolved
 .DS_Store
 bundle.js
