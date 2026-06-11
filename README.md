@@ -10,6 +10,8 @@ The JavaScript runtime in this repo drives the game loop, renders on Canvas2D (d
 
 **Reference game:** [Boss-Man](https://github.com/macOS26/Boss-Man)
 
+lots note planned taking WebAssembly, Wasmtime, and native binaries to a whole new level.
+
 ---
 
 ## What Is in This Repo
